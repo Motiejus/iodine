@@ -110,6 +110,8 @@ static void closeall()
 static int ppp_load_kext()
 {
 	int pid = fork();
+	int status;
+
 	if (pid < 0)
 	{
 		tun_error("fork for ppp kext: %s", strerror(errno));
@@ -123,7 +125,6 @@ static int ppp_load_kext()
 		exit(1);
 	}
 
-	int status;
 	while (waitpid(pid, &status, 0) < 0)
 	{
 		if (errno == EINTR)
@@ -145,8 +146,10 @@ static int ppp_load_kext()
 
 static int ppp_new_instance()
 {
-	// create ppp socket
+	/* create ppp socket */
+    struct sockaddr_ppp pppaddr;
     int ppp_sockfd = socket(PF_PPP, SOCK_RAW, PPPPROTO_CTL);
+
     if (ppp_sockfd < 0)
 	{
 		if (ppp_load_kext() < 0)
@@ -160,8 +163,7 @@ static int ppp_new_instance()
 		}
 	}
 
-	// connect to ppp procotol
-    struct sockaddr_ppp pppaddr;
+	/* connect to ppp procotol */
     pppaddr.ppp_len = sizeof(struct sockaddr_ppp);
     pppaddr.ppp_family = AF_PPP;
     pppaddr.ppp_proto = PPPPROTO_CTL;
@@ -183,7 +185,7 @@ static int ppp_new_unit(int *unit_number)
 	if (fd < 0)
 		return -1;
 
-	// create ppp unit
+	/* create ppp unit */
 	if (ioctl(fd, PPPIOCNEWUNIT, unit_number) < 0)
 	{
 		tun_error("creating ppp unit: %s", strerror(errno));
@@ -197,16 +199,17 @@ static int ppp_new_unit(int *unit_number)
 
 static int ppp_setup_unit(int unit_fd)
 {
-	// send traffic to program
+	/* send traffic to program */
 	int flags = SC_LOOP_TRAFFIC;
+	struct npioctl npi;
+
 	if (ioctl(unit_fd, PPPIOCSFLAGS, &flags) < 0)
 	{
 		tun_error("setting ppp loopback mode: %s", strerror(errno));
 		return -1;
     }
 
-	// allow packets
-	struct npioctl npi;
+	/* allow packets */
 	npi.protocol = PPP_IP;
 	npi.mode = NPMODE_PASS;
 	if (ioctl(unit_fd, PPPIOCSNPMODE, &npi) < 0)
@@ -221,13 +224,13 @@ static int ppp_setup_unit(int unit_fd)
 
 static int open_pcap()
 {
+	char errbuf[PCAP_ERRBUF_SIZE];
 	if (pcap != NULL)
 	{
 		pcap_use_count++;
 		return 0;
 	}
 
-	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap = pcap_open_live("lo0", BUFSIZ, 0, 1, errbuf);
 	pcap_use_count = 1;
 
@@ -271,14 +274,16 @@ static void make_device_name(tunemu_device device, int unit_number)
 
 static int check_device_name(tunemu_device device)
 {
+	tunemu_device compare;
+    int unit_number;
+
 	if (strlen(device) < 4)
 		return -1;
 
-	int unit_number = atoi(device + 3);
+	unit_number = atoi(device + 3);
 	if (unit_number < 0 || unit_number > 999)
 		return -1;
 
-	tunemu_device compare;
 	make_device_name(compare, unit_number);
 
 	if (strcmp(device, compare) != 0)
@@ -290,6 +295,7 @@ static int check_device_name(tunemu_device device)
 int tunemu_open(tunemu_device device)
 {
 	int ppp_unit_number = -1;
+    int ppp_unit_fd;
 	if (device[0] != 0)
 	{
 		if (check_device_name(device) < 0)
@@ -301,7 +307,7 @@ int tunemu_open(tunemu_device device)
 		ppp_unit_number = atoi(device + 3);
 	}
 
-	int ppp_unit_fd = ppp_new_unit(&ppp_unit_number);
+	ppp_unit_fd = ppp_new_unit(&ppp_unit_number);
 	if (ppp_unit_fd < 0)
 		return -1;
 
