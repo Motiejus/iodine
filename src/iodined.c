@@ -161,7 +161,7 @@ send_raw(int fd, char *buf, int buflen, int user, int cmd, struct query *q)
 	if (debug >= 2) {
 		struct sockaddr_in *tempin;
 		tempin = (struct sockaddr_in *) &(q->from);
-		fprintf(stderr, "TX-raw: client %s, cmd %d, %d bytes\n", 
+		LOG("TX-raw: client %s, cmd %d, %d bytes\n", 
 			inet_ntoa(tempin->sin_addr), cmd, len);
 	}
 
@@ -209,7 +209,7 @@ save_to_outpacketq(int userid, char *data, int datalen)
 	users[userid].outpacketq_filled++;
 
 	if (debug >= 3)
-		fprintf(stderr, "    Qstore, now %d\n",
+		LOG("    Qstore, now %d\n",
 			users[userid].outpacketq_filled);
 
 	return 1;
@@ -238,7 +238,7 @@ get_from_outpacketq(int userid)
 	users[userid].outpacketq_filled--;
 
 	if (debug >= 3)
-		fprintf(stderr, "    Qget, now %d\n",
+		LOG("    Qget, now %d\n",
 			users[userid].outpacketq_filled);
 
 	return 1;
@@ -309,7 +309,7 @@ answer_from_dnscache(int dns_fd, int userid, struct query *q)
 
 		/* okay, match */
 		if (debug >= 1)
-			fprintf(stderr, "OUT  user %d %s from dnscache\n", userid, q->name);
+			LOG("OUT  user %d %s from dnscache\n", userid, q->name);
 
 		write_dns(dns_fd, q, users[userid].dnscache_answer[use],
 			  users[userid].dnscache_answerlen[use],
@@ -419,7 +419,7 @@ answer_from_qmem(int dns_fd, struct query *q, unsigned char *qmem_cmc,
 
 		/* okay, match */
 		if (debug >= 1)
-			fprintf(stderr, "OUT  from qmem for %s == duplicate, sending illegal reply\n", q->name);
+			LOG("OUT  from qmem for %s == duplicate, sending illegal reply\n", q->name);
 
 		write_dns(dns_fd, q, "x", 1, 'T');
 
@@ -500,7 +500,7 @@ send_chunk_or_dataless(int dns_fd, int userid, struct query *q)
 		((users[userid].outpacket.fragment & 15) << 1) | (last & 1);
 
 	if (debug >= 1) {
-		fprintf(stderr, "OUT  pkt seq# %d, frag %d (last=%d), offset %d, fragsize %d, total %d, to user %d\n",
+		LOG("OUT  pkt seq# %d, frag %d (last=%d), offset %d, fragsize %d, total %d, to user %d\n",
 			users[userid].outpacket.seqno & 7, users[userid].outpacket.fragment & 15, 
 			last, users[userid].outpacket.offset, datalen, users[userid].outpacket.len, userid);
 	}
@@ -511,7 +511,7 @@ send_chunk_or_dataless(int dns_fd, int userid, struct query *q)
 		q->fromlen = q->fromlen2;
 		memcpy(&(q->from), &(q->from2), q->fromlen2);
 		if (debug >= 1)
-			fprintf(stderr, "OUT  again to last duplicate\n");
+			LOG("OUT  again to last duplicate\n");
 		write_dns(dns_fd, q, pkt, datalen + 2, users[userid].downenc);
 	}
 
@@ -534,7 +534,7 @@ send_chunk_or_dataless(int dns_fd, int userid, struct query *q)
 		/* Maybe more in queue, prepare for next time */
 		if (get_from_outpacketq(userid) == 1) {
 			if (debug >= 3)
-				fprintf(stderr, "    Chunk & fromqueue: callagain\n");
+				LOG("    Chunk & fromqueue: callagain\n");
 			return 1;	/* call us again */
 		}
 #endif
@@ -1114,7 +1114,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			   (If we already sent an answer, qmem/cache will
 			   have triggered.) */
 			if (debug >= 2) {
-				fprintf(stderr, "PING pkt from user %d = dupe from impatient DNS server, remembering\n",
+				LOG("PING pkt from user %d = dupe from impatient DNS server, remembering\n",
 					userid);
 			}
 			users[userid].q.id2 = q->id;
@@ -1129,7 +1129,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			/* Outer select loop will send answer immediately,
 			   to both queries. */
 			if (debug >= 2) {
-				fprintf(stderr, "PING pkt from user %d = dupe from impatient DNS server, remembering\n",
+				LOG("PING pkt from user %d = dupe from impatient DNS server, remembering\n",
 					userid);
 			}
 			users[userid].q_sendrealsoon.id2 = q->id;
@@ -1143,14 +1143,14 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 		dn_frag = unpacked[1] & 15;
 
 		if (debug >= 1) {
-			fprintf(stderr, "PING pkt from user %d, ack for downstream %d/%d\n",
+			LOG("PING pkt from user %d, ack for downstream %d/%d\n",
 				userid, dn_seq, dn_frag);
 		}
 
 		process_downstream_ack(userid, dn_seq, dn_frag);
 
 		if (debug >= 3) {
-			fprintf(stderr, "PINGret (if any) will ack upstream %d/%d\n",
+			LOG("PINGret (if any) will ack upstream %d/%d\n",
 				users[userid].inpacket.seqno, users[userid].inpacket.fragment);
 		}
 
@@ -1242,7 +1242,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			   (If we already sent an answer, qmem/cache will
 			   have triggered.) */
 			if (debug >= 2) {
-				fprintf(stderr, "IN   pkt from user %d = dupe from impatient DNS server, remembering\n",
+				LOG("IN   pkt from user %d = dupe from impatient DNS server, remembering\n",
 					userid);
 			}
 			users[userid].q.id2 = q->id;
@@ -1257,7 +1257,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			/* Outer select loop will send answer immediately,
 			   to both queries. */
 			if (debug >= 2) {
-				fprintf(stderr, "IN   pkt from user %d = dupe from impatient DNS server, remembering\n",
+				LOG("IN   pkt from user %d = dupe from impatient DNS server, remembering\n",
 					userid);
 			}
 			users[userid].q_sendrealsoon.id2 = q->id;
@@ -1287,7 +1287,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			   that tries again, and sending our current (non-
 			   matching) fragno won't be a problem. */
 			if (debug >= 1) {
-				fprintf(stderr, "IN   pkt seq# %d, frag %d, dropped duplicate frag\n",
+				LOG("IN   pkt seq# %d, frag %d, dropped duplicate frag\n",
 					up_seq, up_frag);
 			}
 			upstream_ok = 0;
@@ -1297,7 +1297,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			/* Duplicate of recent upstream data packet; probably
 			   need to answer this to keep DNS server happy */
 			if (debug >= 1) {
-				fprintf(stderr, "IN   pkt seq# %d, frag %d, dropped duplicate recent seqno\n",
+				LOG("IN   pkt seq# %d, frag %d, dropped duplicate recent seqno\n",
 					up_seq, up_frag);
  			}
 			upstream_ok = 0;
@@ -1316,7 +1316,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 		}
 
 		if (debug >= 3) {
-			fprintf(stderr, "INpack with upstream %d/%d, we are going to ack upstream %d/%d\n",
+			LOG("INpack with upstream %d/%d, we are going to ack upstream %d/%d\n",
 				up_seq, up_frag,
 				users[userid].inpacket.seqno, users[userid].inpacket.fragment);
 		}
@@ -1333,7 +1333,7 @@ handle_null_request(int tun_fd, int dns_fd, struct query *q, int domain_len)
 			users[userid].inpacket.offset += read;
 
 			if (debug >= 1) {
-				fprintf(stderr, "IN   pkt seq# %d, frag %d (last=%d), fragsize %d, total %d, from user %d\n",
+				LOG("IN   pkt seq# %d, frag %d (last=%d), fragsize %d, total %d, from user %d\n",
 					up_seq, up_frag, lastfrag, read, users[userid].inpacket.len, userid);
 			}
 		}
@@ -1439,7 +1439,7 @@ handle_ns_request(int dns_fd, struct query *q)
 	if (debug >= 2) {
 		struct sockaddr_in *tempin;
 		tempin = (struct sockaddr_in *) &(q->from);
-		fprintf(stderr, "TX: client %s, type %d, name %s, %d bytes NS reply\n", 
+		LOG("TX: client %s, type %d, name %s, %d bytes NS reply\n", 
 			inet_ntoa(tempin->sin_addr), q->type, q->name, len);
 	}
 	if (sendto(dns_fd, buf, len, 0, (struct sockaddr*)&q->from, q->fromlen) <= 0) {
@@ -1473,7 +1473,7 @@ handle_a_request(int dns_fd, struct query *q, int fakeip)
 	if (debug >= 2) {
 		struct sockaddr_in *tempin;
 		tempin = (struct sockaddr_in *) &(q->from);
-		fprintf(stderr, "TX: client %s, type %d, name %s, %d bytes A reply\n",
+		LOG("TX: client %s, type %d, name %s, %d bytes A reply\n",
 			inet_ntoa(tempin->sin_addr), q->type, q->name, len);
 	}
 	if (sendto(dns_fd, buf, len, 0, (struct sockaddr*)&q->from, q->fromlen) <= 0) {
@@ -1508,7 +1508,7 @@ forward_query(int bind_fd, struct query *q)
 	myaddr->sin_port = htons(bind_port);
 	
 	if (debug >= 2) {
-		fprintf(stderr, "TX: NS reply \n");
+		LOG("TX: NS reply \n");
 	}
 
 	if (sendto(bind_fd, buf, len, 0, (struct sockaddr*)&q->from, q->fromlen) <= 0) {
@@ -1536,20 +1536,20 @@ tunnel_bind(int bind_fd, int dns_fd)
 	id = dns_get_id(packet, r);
 	
 	if (debug >= 2) {
-		fprintf(stderr, "RX: Got response on query %u from DNS\n", (id & 0xFFFF));
+		LOG("RX: Got response on query %u from DNS\n", (id & 0xFFFF));
 	}
 
 	/* Get sockaddr from id */
 	fw_query_get(id, &query);
 	if (!query && debug >= 2) {
-		fprintf(stderr, "Lost sender of id %u, dropping reply\n", (id & 0xFFFF));
+		LOG("Lost sender of id %u, dropping reply\n", (id & 0xFFFF));
 		return 0;
 	}
 
 	if (debug >= 2) {
 		struct sockaddr_in *in;
 		in = (struct sockaddr_in *) &(query->addr);
-		fprintf(stderr, "TX: client %s id %u, %d bytes\n",
+		LOG("TX: client %s id %u, %d bytes\n",
 			inet_ntoa(in->sin_addr), (id & 0xffff), r);
 	}
 	
@@ -1575,7 +1575,7 @@ tunnel_dns(int tun_fd, int dns_fd, int bind_fd)
 	if (debug >= 2) {
 		struct sockaddr_in *tempin;
 		tempin = (struct sockaddr_in *) &(q.from);
-		fprintf(stderr, "RX: client %s, type %d, name %s\n", 
+		LOG("RX: client %s, type %d, name %s\n", 
 			inet_ntoa(tempin->sin_addr), q.type, q.name);
 	}
 
@@ -1770,7 +1770,7 @@ handle_full_packet(int tun_fd, int dns_fd, int userid)
 		}
 	} else {
 		if (debug >= 1)
-			fprintf(stderr, "Discarded data, uncompress() result: %d\n", ret);
+			LOG("Discarded data, uncompress() result: %d\n", ret);
 	}
 
 	/* This packet is done */
@@ -1792,7 +1792,7 @@ handle_raw_login(char *packet, int len, struct query *q, int fd, int userid)
 	if (users[userid].last_pkt + 60 < time(NULL)) return;
 
 	if (debug >= 1) {
-		fprintf(stderr, "IN   login raw, len %d, from user %d\n",
+		LOG("IN   login raw, len %d, from user %d\n",
 			len, userid);
 	}
 
@@ -1833,7 +1833,7 @@ handle_raw_data(char *packet, int len, struct query *q, int dns_fd, int tun_fd, 
 	users[userid].inpacket.len = len;
 
 	if (debug >= 1) {
-		fprintf(stderr, "IN   pkt raw, total %d, from user %d\n",
+		LOG("IN   pkt raw, total %d, from user %d\n",
 			users[userid].inpacket.len, userid);
 	}
 
@@ -1852,7 +1852,7 @@ handle_raw_ping(struct query *q, int dns_fd, int userid)
 	memcpy(&(users[userid].q), q, sizeof(struct query));
 
 	if (debug >= 1) {
-		fprintf(stderr, "IN   ping raw, from user %d\n", userid);
+		LOG("IN   ping raw, from user %d\n", userid);
 	}
 
 	/* Send ping reply */
@@ -2108,7 +2108,7 @@ write_dns(int fd, struct query *q, char *data, int datalen, char downenc)
 	if (debug >= 2) {
 		struct sockaddr_in *tempin;
 		tempin = (struct sockaddr_in *) &(q->from);
-		fprintf(stderr, "TX: client %s, type %d, name %s, %d bytes data\n", 
+		LOG("TX: client %s, type %d, name %s, %d bytes data\n", 
 			inet_ntoa(tempin->sin_addr), q->type, q->name, datalen);
 	}
 
@@ -2119,7 +2119,7 @@ static void
 usage() {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-v] [-h] [-c] [-s] [-f] [-D] [-u user] "
+	LOG("Usage: %s [-v] [-h] [-c] [-s] [-f] [-D] [-u user] "
 		"[-t chrootdir] [-d device] [-m mtu] [-z context] "
 		"[-l ip address to listen on] [-p port] [-n external ip] "
 		"[-b dnsport] [-P password] [-F pidfile] "
@@ -2131,41 +2131,41 @@ static void
 help() {
 	extern char *__progname;
 
-	fprintf(stderr, "iodine IP over DNS tunneling server\n");
-	fprintf(stderr, "Usage: %s [-v] [-h] [-c] [-s] [-f] [-D] [-u user] "
+	LOG("iodine IP over DNS tunneling server\n");
+	LOG("Usage: %s [-v] [-h] [-c] [-s] [-f] [-D] [-u user] "
 		"[-t chrootdir] [-d device] [-m mtu] [-z context] "
 		"[-l ip address to listen on] [-p port] [-n external ip] [-b dnsport] [-P password] "
 		"[-F pidfile] tunnel_ip[/netmask] topdomain\n", __progname);
-	fprintf(stderr, "  -v to print version info and exit\n");
-	fprintf(stderr, "  -h to print this help and exit\n");
-	fprintf(stderr, "  -c to disable check of client IP/port on each request\n");
-	fprintf(stderr, "  -s to skip creating and configuring the tun device, "
+	LOG("  -v to print version info and exit\n");
+	LOG("  -h to print this help and exit\n");
+	LOG("  -c to disable check of client IP/port on each request\n");
+	LOG("  -s to skip creating and configuring the tun device, "
 		"which then has to be created manually\n");
-	fprintf(stderr, "  -f to keep running in foreground\n");
-	fprintf(stderr, "  -D to increase debug level\n");
-	fprintf(stderr, "     (using -DD in UTF-8 terminal: \"LC_ALL=C luit iodined -DD ...\")\n");
-	fprintf(stderr, "  -u name to drop privileges and run as user 'name'\n");
-	fprintf(stderr, "  -t dir to chroot to directory dir\n");
-	fprintf(stderr, "  -d device to set tunnel device name\n");
-	fprintf(stderr, "  -m mtu to set tunnel device mtu\n");
-	fprintf(stderr, "  -z context to apply SELinux context after initialization\n");
-	fprintf(stderr, "  -l ip address to listen on for incoming dns traffic "
+	LOG("  -f to keep running in foreground\n");
+	LOG("  -D to increase debug level\n");
+	LOG("     (using -DD in UTF-8 terminal: \"LC_ALL=C luit iodined -DD ...\")\n");
+	LOG("  -u name to drop privileges and run as user 'name'\n");
+	LOG("  -t dir to chroot to directory dir\n");
+	LOG("  -d device to set tunnel device name\n");
+	LOG("  -m mtu to set tunnel device mtu\n");
+	LOG("  -z context to apply SELinux context after initialization\n");
+	LOG("  -l ip address to listen on for incoming dns traffic "
 		"(default 0.0.0.0)\n");
-	fprintf(stderr, "  -p port to listen on for incoming dns traffic (default 53)\n");
-	fprintf(stderr, "  -n ip to respond with to NS queries\n");
-	fprintf(stderr, "  -b port to forward normal DNS queries to (on localhost)\n");
-	fprintf(stderr, "  -P password used for authentication (max 32 chars will be used)\n");
-	fprintf(stderr, "  -F pidfile to write pid to a file\n");
-	fprintf(stderr, "tunnel_ip is the IP number of the local tunnel interface.\n");
-	fprintf(stderr, "   /netmask sets the size of the tunnel network.\n");
-	fprintf(stderr, "topdomain is the FQDN that is delegated to this server.\n");
+	LOG("  -p port to listen on for incoming dns traffic (default 53)\n");
+	LOG("  -n ip to respond with to NS queries\n");
+	LOG("  -b port to forward normal DNS queries to (on localhost)\n");
+	LOG("  -P password used for authentication (max 32 chars will be used)\n");
+	LOG("  -F pidfile to write pid to a file\n");
+	LOG("tunnel_ip is the IP number of the local tunnel interface.\n");
+	LOG("   /netmask sets the size of the tunnel network.\n");
+	LOG("topdomain is the FQDN that is delegated to this server.\n");
 	exit(0);
 }
 
 static void
 version() {
-	fprintf(stderr, "iodine IP over DNS tunneling server\n");
-	fprintf(stderr, "version: 0.6.0-rc1 from 2010-02-13\n");
+	LOG("iodine IP over DNS tunneling server\n");
+	LOG("version: 0.6.0-rc1 from 2010-02-13\n");
 	exit(0);
 }
 
@@ -2367,22 +2367,22 @@ main(int argc, char **argv)
 		/* Avoid forwarding loops */
 		if (bind_port == port && (listen_ip == INADDR_ANY || listen_ip == htonl(0x7f000001L))) {
 			warnx("Forward port is same as listen port (%d), will create a loop!", bind_port);
-			fprintf(stderr, "Use -l to set listen ip to avoid this.\n");
+			LOG("Use -l to set listen ip to avoid this.\n");
 			usage();
 			/* NOTREACHED */
 		}
-		fprintf(stderr, "Requests for domains outside of %s will be forwarded to port %d\n",
+		LOG("Requests for domains outside of %s will be forwarded to port %d\n",
 			topdomain, bind_port);
 	}
 	
 	if (port != 53) {
-		fprintf(stderr, "ALERT! Other dns servers expect you to run on port 53.\n");
-		fprintf(stderr, "You must manually forward port 53 to port %d for things to work.\n", port);
+		LOG("ALERT! Other dns servers expect you to run on port 53.\n");
+		LOG("You must manually forward port 53 to port %d for things to work.\n", port);
 	}
 
 	if (debug) {
-		fprintf(stderr, "Debug level %d enabled, will stay in foreground.\n", debug);
-		fprintf(stderr, "Add more -D switches to set higher debug level.\n");
+		LOG("Debug level %d enabled, will stay in foreground.\n", debug);
+		LOG("Add more -D switches to set higher debug level.\n");
 		foreground = 1;
 	}
 
@@ -2436,10 +2436,10 @@ main(int argc, char **argv)
 	my_mtu = mtu;
 	
 	if (created_users < USERS) {
-		fprintf(stderr, "Limiting to %d simultaneous users because of netmask /%d\n",
+		LOG("Limiting to %d simultaneous users because of netmask /%d\n",
 			created_users, netmask);
 	}
-	fprintf(stderr, "Listening to dns for domain %s\n", topdomain);
+	LOG("Listening to dns for domain %s\n", topdomain);
 
 	if (foreground == 0) 
 		do_detach();
