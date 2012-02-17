@@ -50,6 +50,8 @@ extern const unsigned char raw_header[RAW_HDR_LEN];
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
 
+#define LOG(...) fprintf(stderr,__VA_ARGS__)
+
 #define QUERY_NAME_SIZE 256
 
 #if defined IP_RECVDSTADDR 

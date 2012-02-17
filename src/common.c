@@ -125,7 +125,7 @@ open_dns(int localport, in_addr_t listen_ip)
 	addr.sin_addr.s_addr = listen_ip; 
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		fprintf(stderr, "got fd %d\n", fd);
+		LOG("got fd %d\n", fd);
 		err(1, "socket");
 	}
 
@@ -149,7 +149,7 @@ open_dns(int localport, in_addr_t listen_ip)
 	if(bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) 
 		err(1, "bind");
 
-	fprintf(stderr, "Opened UDP socket\n");
+	LOG("Opened UDP socket\n");
 
 	return fd;
 }
@@ -199,7 +199,7 @@ do_pidfile(char *pidfile)
 		fclose(file);
 	}
 #else
-	fprintf(stderr, "Windows version does not support pid file\n");
+	LOG("Windows version does not support pid file\n");
 #endif
 }
 
@@ -207,12 +207,12 @@ void
 do_detach()
 {
 #ifndef WINDOWS32
-	fprintf(stderr, "Detaching from terminal...\n");
+	LOG("Detaching from terminal...\n");
 	daemon(0, 0);
 	umask(0);
 	alarm(0);
 #else
-	fprintf(stderr, "Windows version does not support detaching\n");
+	LOG("Windows version does not support detaching\n");
 #endif
 }
 
@@ -233,7 +233,7 @@ read_password(char *buf, size_t len)
 	int i;
 #endif
 
-	fprintf(stderr, "Enter password: ");
+	LOG("Enter password: ");
 	fflush(stderr);
 #ifndef WINDOWS32
 	fscanf(stdin, "%79[^\n]", pwd);
@@ -249,7 +249,7 @@ read_password(char *buf, size_t len)
 		}
 	}
 #endif
-	fprintf(stderr, "\n");
+	LOG("\n");
 
 #ifndef WINDOWS32
 	tcsetattr(0, TCSANOW, &old);	
@@ -290,11 +290,11 @@ warn(const char *fmt, ...)
 	va_list list;
 
 	va_start(list, fmt);
-	if (fmt) fprintf(stderr, fmt, list);
+	if (fmt) LOG(fmt, list);
 	if (errno == 0) {
-		fprintf(stderr, ": WSA error %d\n", WSAGetLastError()); 
+		LOG(": WSA error %d\n", WSAGetLastError()); 
 	} else {
-		fprintf(stderr, ": %s\n", strerror(errno));
+		LOG(": %s\n", strerror(errno));
 	}
 	va_end(list);
 }
@@ -305,8 +305,8 @@ warnx(const char *fmt, ...)
 	va_list list;
 
 	va_start(list, fmt);
-	if (fmt) fprintf(stderr, fmt, list);
-	fprintf(stderr, "\n");
+	if (fmt) LOG(fmt, list);
+	LOG("\n");
 	va_end(list);
 }
 

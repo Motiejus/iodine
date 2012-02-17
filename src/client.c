@@ -159,7 +159,7 @@ client_set_nameserver(const char *cp, int port)
 			int i = 0;
 			while (host->h_addr_list[i] != 0) {
 				addr = *(struct in_addr *) host->h_addr_list[i++];
-				fprintf(stderr, "Resolved %s to %s\n", cp, inet_ntoa(addr));
+				LOG("Resolved %s to %s\n", cp, inet_ntoa(addr));
 				goto setaddr;
 			}
 		}
@@ -299,7 +299,7 @@ send_query(int fd, char *hostname)
 	}
 
 #if 0
-	fprintf(stderr, "  Sendquery: id %5d name[0] '%c'\n", q.id, hostname[0]);
+	LOG("  Sendquery: id %5d name[0] '%c'\n", q.id, hostname[0]);
 #endif
 
 	sendto(fd, packet, len, 0, (struct sockaddr*)&nameserv, sizeof(nameserv));
@@ -418,7 +418,7 @@ send_chunk(int fd)
 		datacmc = 0;
   
 #if 0
-	fprintf(stderr, "  Send: down %d/%d up %d/%d, %d bytes\n",
+	LOG("  Send: down %d/%d up %d/%d, %d bytes\n",
 		inpkt.seqno, inpkt.fragment, outpkt.seqno, outpkt.fragment,
 		outpkt.sentlen);
 #endif
@@ -440,7 +440,7 @@ send_ping(int fd)
 		rand_seed++;
 
 #if 0
-		fprintf(stderr, "  Send: down %d/%d         (ping)\n",
+		LOG("  Send: down %d/%d         (ping)\n",
 			inpkt.seqno, inpkt.fragment);
 #endif
 
@@ -731,7 +731,7 @@ handshake_waitdns(int dns_fd, char *buf, int buflen, char c1, char c2, int timeo
 
 		if (q.id != chunkid || (q.name[0] != c1 && q.name[0] != c2)) {
 #if 0
-			fprintf(stderr, "Ignoring unfitting reply id %d starting with '%c'\n", q.id, q.name[0]);
+			LOG("Ignoring unfitting reply id %d starting with '%c'\n", q.id, q.name[0]);
 #endif
 			continue;
 		}
@@ -747,8 +747,8 @@ handshake_waitdns(int dns_fd, char *buf, int buflen, char c1, char c2, int timeo
 		if (rv < 0 && q.rcode == NOERROR &&
 		    (q.name[0] == 'Y' || q.name[0] == 'y' ||
 		     q.name[0] == 'V' || q.name[0] == 'v')) {
-			fprintf(stderr, "Got empty reply. This nameserver may not be resolving recursively, use another.\n");
-			fprintf(stderr, "Try \"iodine [options] ns.%s %s\" first, it might just work.\n",
+			LOG("Got empty reply. This nameserver may not be resolving recursively, use another.\n");
+			LOG("Try \"iodine [options] ns.%s %s\" first, it might just work.\n",
 				topdomain, topdomain);
 			return -2;
 		}
@@ -840,7 +840,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 		return 1;  /* everything already done */
 
 #if 0
-	fprintf(stderr, "				Recv: id %5d name[0]='%c'\n",
+	LOG("				Recv: id %5d name[0]='%c'\n",
 		q.id, q.name[0]);
 #endif
 
@@ -885,7 +885,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 		   All these cases are helped by faster pinging. */
 #if 0
 		if (read == 1)
-			fprintf(stderr, "   q=%c id %5d 1-byte illegal \"QMEM\" reply\n", q.name[0], q.id);
+			LOG("   q=%c id %5d 1-byte illegal \"QMEM\" reply\n", q.name[0], q.id);
 #endif
 
 		send_ping_soon = 900;
@@ -911,7 +911,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 	up_ack_fragment = buf[0] & 15;
 
 #if 0
-	fprintf(stderr, "				Recv: id %5d down %d/%d up %d/%d, %d bytes\n",
+	LOG("				Recv: id %5d down %d/%d up %d/%d, %d bytes\n",
 		q.id, new_down_seqno, new_down_fragment, up_ack_seqno,
 		up_ack_fragment, read);
 #endif
@@ -947,7 +947,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 	if (q.id != chunkid && q.id != chunkid_prev && q.id != chunkid_prev2) {
 		packrecv_oos++;
 #if 0
-		fprintf(stderr, "   q=%c Packs received = %8ld  Out-of-sequence = %8ld\n", q.name[0], packrecv, packrecv_oos);
+		LOG("   q=%c Packs received = %8ld  Out-of-sequence = %8ld\n", q.name[0], packrecv, packrecv_oos);
 #endif
 		if (lazymode && packrecv < 1000 && packrecv_oos == 5) {
 			if (selecttimeout > 1)
@@ -966,7 +966,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 		return -1;	/* nothing done */
 	}
 #if 0
-	fprintf(stderr, "   q=%c Packs received = %8ld  Out-of-sequence = %8ld\n", q.name[0], packrecv, packrecv_oos);
+	LOG("   q=%c Packs received = %8ld  Out-of-sequence = %8ld\n", q.name[0], packrecv, packrecv_oos);
 #endif
 
 	/* Okay, we have a recent downstream packet */
@@ -1069,7 +1069,7 @@ tunnel_dns(int tun_fd, int dns_fd)
 	if (is_sending()) {
 		/* already checked read>=2 */
 #if 0
-		fprintf(stderr, "Got ack for %d,%d - expecting %d,%d - id=%d cur=%d prev=%d prev2=%d\n",
+		LOG("Got ack for %d,%d - expecting %d,%d - id=%d cur=%d prev=%d prev2=%d\n",
 			up_ack_seqno, up_ack_fragment, outpkt.seqno, outpkt.fragment,
 			q.id, chunkid, chunkid_prev, chunkid_prev2);
 #endif
@@ -1442,7 +1442,7 @@ handshake_version(int dns_fd, int *seed)
 					userid_char = hex[userid & 15];
 					userid_char2 = hex2[userid & 15];
 
-					fprintf(stderr, "Version ok, both using protocol v 0x%08x. You are user #%d\n", VERSION, userid);
+					LOG("Version ok, both using protocol v 0x%08x. You are user #%d\n", VERSION, userid);
 					return 0;
 				} else if (strncmp("VNAK", in, 4) == 0) {
 					warnx("You use protocol v 0x%08x, server uses v 0x%08x. Giving up", 
@@ -1456,7 +1456,7 @@ handshake_version(int dns_fd, int *seed)
 				warnx("did not receive proper login challenge");
 		/*XXX END adjust indent 1 tab back*/
 		
-		fprintf(stderr, "Retrying version check...\n");
+		LOG("Retrying version check...\n");
 	}
 	warnx("couldn't connect to server (maybe other -T options will work)");
 	return 1;
@@ -1485,7 +1485,7 @@ handshake_login(int dns_fd, int seed)
 			if (read > 0) {
 				int netmask;
 				if (strncmp("LNAK", in, 4) == 0) {
-					fprintf(stderr, "Bad password\n");
+					LOG("Bad password\n");
 					return 1;
 				} else if (sscanf(in, "%64[^-]-%64[^-]-%d-%d", 
 					server, client, &mtu, &netmask) == 4) {
@@ -1495,18 +1495,18 @@ handshake_login(int dns_fd, int seed)
 					if (tun_setip(client, server, netmask) == 0 && 
 						tun_setmtu(mtu) == 0) {
 
-						fprintf(stderr, "Server tunnel IP is %s\n", server);
+						LOG("Server tunnel IP is %s\n", server);
 						return 0;
 					} else {
 						errx(4, "Failed to set IP and MTU");
 					}
 				} else {
-					fprintf(stderr, "Received bad handshake\n");
+					LOG("Received bad handshake\n");
 				}
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, "Retrying login...\n");
+		LOG("Retrying login...\n");
 	}
 	warnx("couldn't login to server");
 	return 1;
@@ -1524,7 +1524,7 @@ handshake_raw_udp(int dns_fd, int seed)
 	unsigned remoteaddr = 0;
 	struct in_addr server;
 
-	fprintf(stderr, "Testing raw UDP data to the server (skip with -r)");
+	LOG("Testing raw UDP data to the server (skip with -r)");
 	for (i=0; running && i<3 ;i++) {
 
 		send_ip_request(dns_fd, userid);
@@ -1546,18 +1546,18 @@ handshake_raw_udp(int dns_fd, int seed)
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, ".");
+		LOG(".");
 		fflush(stderr);
 	}
-	fprintf(stderr, "\n");
+	LOG("\n");
 	if (!running)
 		return 0;
 	
 	if (!remoteaddr) {
-		fprintf(stderr, "Failed to get raw server IP, will use DNS mode.\n");
+		LOG("Failed to get raw server IP, will use DNS mode.\n");
 		return 0;
 	}
-	fprintf(stderr, "Server is at %s, trying raw login: ", inet_ntoa(server));
+	LOG("Server is at %s, trying raw login: ", inet_ntoa(server));
 	fflush(stderr);
 
 	/* Store address to iodined server */
@@ -1590,16 +1590,16 @@ handshake_raw_udp(int dns_fd, int seed)
 					&& RAW_HDR_GET_CMD(in) == RAW_HDR_CMD_LOGIN 
 					&& memcmp(&in[RAW_HDR_LEN], hash, sizeof(hash)) == 0) {
 
-					fprintf(stderr, "OK\n");
+					LOG("OK\n");
 					return 1;
 				}
 			}
 		}
-		fprintf(stderr, ".");
+		LOG(".");
 		fflush(stderr);
 	}
 	
-	fprintf(stderr, "failed\n");
+	LOG("failed\n");
 	return 0;
 }
 
@@ -1639,15 +1639,15 @@ handshake_upenctest(int dns_fd, char *s)
 			/* in[56] = '_'; */
 			/* if (in[29] == '\344') in[29] = 'a'; */
 			in[read] = '\0';
-			fprintf(stderr, "BounceReply: >%s<\n", in);
+			LOG("BounceReply: >%s<\n", in);
 #endif
 			/* quick check if case swapped, to give informative error msg */
 			if (in[4] == 'A') {
-				fprintf(stderr, "DNS queries get changed to uppercase, keeping upstream codec Base32\n");
+				LOG("DNS queries get changed to uppercase, keeping upstream codec Base32\n");
 				return -1;
 			}
 			if (in[5] == 'a') {
-				fprintf(stderr, "DNS queries get changed to lowercase, keeping upstream codec Base32\n");
+				LOG("DNS queries get changed to lowercase, keeping upstream codec Base32\n");
 				return -1;
 			}
 
@@ -1656,10 +1656,10 @@ handshake_upenctest(int dns_fd, char *s)
 					/* Definitely not reliable */
 					if (in[k+4] >= ' ' && in[k+4] <= '~' &&
 					    s[k] >= ' ' && s[k] <= '~') {
-						fprintf(stderr, "DNS query char '%c' gets changed into '%c'\n",
+						LOG("DNS query char '%c' gets changed into '%c'\n",
 							s[k], in[k+4]);
 					} else {
-						fprintf(stderr, "DNS query char 0x%02X gets changed into 0x%02X\n",
+						LOG("DNS query char 0x%02X gets changed into 0x%02X\n",
 							(unsigned int) us[k],
 							(unsigned int) uin[k+4]);
 					}
@@ -1670,7 +1670,7 @@ handshake_upenctest(int dns_fd, char *s)
 			return 1;
 		}
 
-		fprintf(stderr, "Retrying upstream codec test...\n");
+		LOG("Retrying upstream codec test...\n");
 	}
 
 	if (!running)
@@ -1771,7 +1771,7 @@ handshake_upenc_autodetect(int dns_fd)
 	}
 
 	/* if here, then nonthing worked */
-	fprintf(stderr, "Keeping upstream codec Base32\n");
+	LOG("Keeping upstream codec Base32\n");
 	return 0;
 }
 
@@ -1812,7 +1812,7 @@ handshake_downenctest(int dns_fd, char trycodec)
 			return 1;
 		}
 
-		fprintf(stderr, "Retrying downstream codec test...\n");
+		LOG("Retrying downstream codec test...\n");
 	}
 
 	/* timeout */
@@ -1829,11 +1829,11 @@ handshake_downenc_autodetect(int dns_fd)
 
 	if (do_qtype == T_NULL) {
 		/* no other choice than raw */
-		fprintf(stderr, "No alternative downstream codec available, using default (Raw)\n");
+		LOG("No alternative downstream codec available, using default (Raw)\n");
 		return ' ';
 	}
 
-	fprintf(stderr, "Autodetecting downstream codec (use -O to override)\n");
+	LOG("Autodetecting downstream codec (use -O to override)\n");
 
 	/* Try Base64 */
 	if (handshake_downenctest(dns_fd, 'S'))
@@ -1863,7 +1863,7 @@ handshake_downenc_autodetect(int dns_fd)
 	if (base64uok)
 		return 'U';
 
-	fprintf(stderr, "No advanced downstream codecs seem to work, using default (Base32)\n");
+	LOG("No advanced downstream codecs seem to work, using default (Base32)\n");
 	return ' ';
 }
 
@@ -1932,7 +1932,7 @@ handshake_qtype_autodetect(int dns_fd)
 	int timeout;
 	int qtypenum;
 
-	fprintf(stderr, "Autodetecting DNS query type (use -T to override)");
+	LOG("Autodetecting DNS query type (use -T to override)");
 	fflush(stderr);
 
 	/* Method: try all "interesting" qtypes with a 1-sec timeout, then try
@@ -1951,14 +1951,14 @@ handshake_qtype_autodetect(int dns_fd)
 			if (do_qtype == T_UNSET)
 				break;	/* this round finished */
 
-			fprintf(stderr, ".");
+			LOG(".");
 			fflush(stderr);
 
 			if (handshake_qtypetest(dns_fd, timeout)) {
 				/* okay */
 				highestworking = qtypenum;
 #if 0
-				fprintf(stderr, " Type %s timeout %d works\n",
+				LOG(" Type %s timeout %d works\n",
 					get_qtype(), timeout);
 #endif
 				break;
@@ -1971,7 +1971,7 @@ handshake_qtype_autodetect(int dns_fd)
 			break;
 	}
 
-	fprintf(stderr, "\n");
+	LOG("\n");
 
 	if (!running) {
 		warnx("Stopped while autodetecting DNS query type (try setting manually with -T)");
@@ -2036,7 +2036,7 @@ handshake_edns0_check(int dns_fd)
 			return 1;
 		}
 
-		fprintf(stderr, "Retrying EDNS0 support test...\n");
+		LOG("Retrying EDNS0 support test...\n");
 	}
 
 	/* timeout or Ctrl-C */
@@ -2061,7 +2061,7 @@ handshake_switch_codec(int dns_fd, int bits)
 		tempenc = get_base128_encoder();
 	else return;
 
-	fprintf(stderr, "Switching upstream to codec %s\n", tempenc->name);
+	LOG("Switching upstream to codec %s\n", tempenc->name);
 
 	for (i=0; running && i<5 ;i++) {
 
@@ -2072,31 +2072,31 @@ handshake_switch_codec(int dns_fd, int bits)
 		/*XXX START adjust indent 1 tab back*/			
 			if (read > 0) {
 				if (strncmp("BADLEN", in, 6) == 0) {
-					fprintf(stderr, "Server got bad message length. ");
+					LOG("Server got bad message length. ");
 					goto codec_revert;
 				} else if (strncmp("BADIP", in, 5) == 0) {
-					fprintf(stderr, "Server rejected sender IP address. ");
+					LOG("Server rejected sender IP address. ");
 					goto codec_revert;
 				} else if (strncmp("BADCODEC", in, 8) == 0) {
-					fprintf(stderr, "Server rejected the selected codec. ");
+					LOG("Server rejected the selected codec. ");
 					goto codec_revert;
 				}
 				in[read] = 0; /* zero terminate */
-				fprintf(stderr, "Server switched upstream to codec %s\n", in);
+				LOG("Server switched upstream to codec %s\n", in);
 				dataenc = tempenc;
 				return;
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, "Retrying codec switch...\n");
+		LOG("Retrying codec switch...\n");
 	}
 	if (!running)
 		return;
 
-	fprintf(stderr, "No reply from server on codec switch. ");
+	LOG("No reply from server on codec switch. ");
 
 codec_revert: 
-	fprintf(stderr, "Falling back to upstream codec %s\n", dataenc->name);
+	LOG("Falling back to upstream codec %s\n", dataenc->name);
 }
 
 static void
@@ -2117,7 +2117,7 @@ handshake_switch_downenc(int dns_fd)
 	else if (downenc == 'R')
 		dname = "Raw";
 
-	fprintf(stderr, "Switching downstream to codec %s\n", dname);
+	LOG("Switching downstream to codec %s\n", dname);
 	for (i=0; running && i<5 ;i++) {
 
 		send_downenc_switch(dns_fd, userid);
@@ -2127,30 +2127,30 @@ handshake_switch_downenc(int dns_fd)
 		/*XXX START adjust indent 1 tab back*/
 			if (read > 0) {
 				if (strncmp("BADLEN", in, 6) == 0) {
-					fprintf(stderr, "Server got bad message length. ");
+					LOG("Server got bad message length. ");
 					goto codec_revert;
 				} else if (strncmp("BADIP", in, 5) == 0) {
-					fprintf(stderr, "Server rejected sender IP address. ");
+					LOG("Server rejected sender IP address. ");
 					goto codec_revert;
 				} else if (strncmp("BADCODEC", in, 8) == 0) {
-					fprintf(stderr, "Server rejected the selected codec. ");
+					LOG("Server rejected the selected codec. ");
 					goto codec_revert;
 				}
 				in[read] = 0; /* zero terminate */
-				fprintf(stderr, "Server switched downstream to codec %s\n", in);
+				LOG("Server switched downstream to codec %s\n", in);
 				return;
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, "Retrying codec switch...\n");
+		LOG("Retrying codec switch...\n");
 	}
 	if (!running)
 		return;
 
-	fprintf(stderr, "No reply from server on codec switch. ");
+	LOG("No reply from server on codec switch. ");
 
 codec_revert: 
-	fprintf(stderr, "Falling back to downstream codec Base32\n");
+	LOG("Falling back to downstream codec Base32\n");
 }
 
 static void
@@ -2160,7 +2160,7 @@ handshake_try_lazy(int dns_fd)
 	int i;
 	int read;
 
-	fprintf(stderr, "Switching to lazy mode for low-latency\n");
+	LOG("Switching to lazy mode for low-latency\n");
 	for (i=0; running && i<5; i++) {
 
 		send_lazy_switch(dns_fd, userid);
@@ -2170,31 +2170,31 @@ handshake_try_lazy(int dns_fd)
 		/*XXX START adjust indent 1 tab back*/
 			if (read > 0) {
 				if (strncmp("BADLEN", in, 6) == 0) {
-					fprintf(stderr, "Server got bad message length. ");
+					LOG("Server got bad message length. ");
 					goto codec_revert;
 				} else if (strncmp("BADIP", in, 5) == 0) {
-					fprintf(stderr, "Server rejected sender IP address. ");
+					LOG("Server rejected sender IP address. ");
 					goto codec_revert;
 				} else if (strncmp("BADCODEC", in, 8) == 0) {
-					fprintf(stderr, "Server rejected lazy mode. ");
+					LOG("Server rejected lazy mode. ");
 					goto codec_revert;
 				} else if (strncmp("Lazy", in, 4) == 0) {
-					fprintf(stderr, "Server switched to lazy mode\n");
+					LOG("Server switched to lazy mode\n");
 					lazymode = 1;
 					return;
 				}
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, "Retrying lazy mode switch...\n");
+		LOG("Retrying lazy mode switch...\n");
 	}
 	if (!running)
 		return;
 
-	fprintf(stderr, "No reply from server on lazy switch. ");
+	LOG("No reply from server on lazy switch. ");
 
 codec_revert: 
-	fprintf(stderr, "Falling back to legacy mode\n");
+	LOG("Falling back to legacy mode\n");
 	lazymode = 0;
 	selecttimeout = 1;
 }
@@ -2238,7 +2238,7 @@ fragsize_check(char *in, int read, int proposed_fragsize, int *max_fragsize)
 	unsigned int v;
 
 	if (read >= 5 && strncmp("BADIP", in, 5) == 0) {
-		fprintf(stderr, "got BADIP (Try iodined -c)..\n");
+		LOG("got BADIP (Try iodined -c)..\n");
 		fflush(stderr);
 		return 0;		/* maybe temporary error */
 	}
@@ -2265,7 +2265,7 @@ fragsize_check(char *in, int read, int proposed_fragsize, int *max_fragsize)
 	/* in[123] = 123; */
 
 	if ((in[2] & 0xff) != 107) {
-		fprintf(stderr, "\n");
+		LOG("\n");
 		warnx("corruption at byte 2, this won't work. Try -O Base32, or other -T options.");
 		*max_fragsize = -1;
 		return 1;
@@ -2283,15 +2283,15 @@ fragsize_check(char *in, int read, int proposed_fragsize, int *max_fragsize)
 			}
 
 		if (okay) {
-			fprintf(stderr, "%d ok.. ", acked_fragsize);
+			LOG("%d ok.. ", acked_fragsize);
 			fflush(stderr);
 			*max_fragsize = acked_fragsize;
 			return 1;
 		} else {
 			if (downenc != ' ' && downenc != 'T') {
-				fprintf(stderr, "%d corrupted at %d.. (Try -O Base32)\n", acked_fragsize, i);
+				LOG("%d corrupted at %d.. (Try -O Base32)\n", acked_fragsize, i);
 			} else {
-				fprintf(stderr, "%d corrupted at %d.. ", acked_fragsize, i);
+				LOG("%d corrupted at %d.. ", acked_fragsize, i);
 			}
 			fflush(stderr);
 			return 1;
@@ -2314,7 +2314,7 @@ handshake_autoprobe_fragsize(int dns_fd)
 	int max_fragsize;
 
 	max_fragsize = 0;
-	fprintf(stderr, "Autoprobing max downstream fragment size... (skip with -m fragsize)\n"); 
+	LOG("Autoprobing max downstream fragment size... (skip with -m fragsize)\n"); 
 	while (running && range > 0 && (range >= 8 || max_fragsize < 300)) {
 		/* stop the slow probing early when we have enough bytes anyway */
 		for (i=0; running && i<3 ;i++) {
@@ -2331,7 +2331,7 @@ handshake_autoprobe_fragsize(int dns_fd)
 				}
 			/*XXX END adjust indent 1 tab back*/
 
-			fprintf(stderr, ".");
+			LOG(".");
 			fflush(stderr);
 		}
 		if (max_fragsize < 0)
@@ -2343,13 +2343,13 @@ handshake_autoprobe_fragsize(int dns_fd)
 			proposed_fragsize += range;
 		} else {
 			/* Try smaller */
-			fprintf(stderr, "%d not ok.. ", proposed_fragsize);
+			LOG("%d not ok.. ", proposed_fragsize);
 			fflush(stderr);
 			proposed_fragsize -= range;
 		}
 	}
 	if (!running) {
-		fprintf(stderr, "\n");
+		LOG("\n");
 		warnx("stopped while autodetecting fragment size (Try setting manually with -m)");
 		return 0;
 	}
@@ -2357,23 +2357,23 @@ handshake_autoprobe_fragsize(int dns_fd)
 		/* Tried all the way down to 2 and found no good size.
 		   But we _did_ do all handshake before this, so there must
 		   be some workable connection. */
-		fprintf(stderr, "\n");
+		LOG("\n");
 		warnx("found no accepted fragment size.");
 		warnx("try setting -M to 200 or lower, or try other -T or -O options.");
 		return 0;
 	}
 	/* data header adds 2 bytes */
-	fprintf(stderr, "will use %d-2=%d\n", max_fragsize, max_fragsize - 2);
+	LOG("will use %d-2=%d\n", max_fragsize, max_fragsize - 2);
 
 	/* need 1200 / 16frags = 75 bytes fragsize */
 	if (max_fragsize < 82) {
-		fprintf(stderr, "Note: this probably won't work well.\n");
-		fprintf(stderr, "Try setting -M to 200 or lower, or try other DNS types (-T option).\n");
+		LOG("Note: this probably won't work well.\n");
+		LOG("Try setting -M to 200 or lower, or try other DNS types (-T option).\n");
 	} else if (max_fragsize < 202 &&
 	    (do_qtype == T_NULL || do_qtype == T_TXT ||
 	     do_qtype == T_SRV || do_qtype == T_MX)) {
-		fprintf(stderr, "Note: this isn't very much.\n");
-		fprintf(stderr, "Try setting -M to 200 or lower, or try other DNS types (-T option).\n");
+		LOG("Note: this isn't very much.\n");
+		LOG("Try setting -M to 200 or lower, or try other DNS types (-T option).\n");
 	}
 
 	return max_fragsize - 2;
@@ -2386,7 +2386,7 @@ handshake_set_fragsize(int dns_fd, int fragsize)
 	int i;
 	int read;
 
-	fprintf(stderr, "Setting downstream fragment size to max %d...\n", fragsize);
+	LOG("Setting downstream fragment size to max %d...\n", fragsize);
 	for (i=0; running && i<5 ;i++) {
 
 		send_set_downstream_fragsize(dns_fd, fragsize);
@@ -2398,10 +2398,10 @@ handshake_set_fragsize(int dns_fd, int fragsize)
 				int accepted_fragsize;
 
 				if (strncmp("BADFRAG", in, 7) == 0) {
-					fprintf(stderr, "Server rejected fragsize. Keeping default.");
+					LOG("Server rejected fragsize. Keeping default.");
 					return;
 				} else if (strncmp("BADIP", in, 5) == 0) {
-					fprintf(stderr, "Server rejected sender IP address.\n");
+					LOG("Server rejected sender IP address.\n");
 					return;
 				}
 
@@ -2410,12 +2410,12 @@ handshake_set_fragsize(int dns_fd, int fragsize)
 			}
 		/*XXX END adjust indent 1 tab back*/
 
-		fprintf(stderr, "Retrying set fragsize...\n");
+		LOG("Retrying set fragsize...\n");
 	}
 	if (!running)
 		return;
 
-	fprintf(stderr, "No reply from server when setting fragsize. Keeping default.\n");
+	LOG("No reply from server when setting fragsize. Keeping default.\n");
 }
 
 int
@@ -2435,7 +2435,7 @@ client_handshake(int dns_fd, int raw_mode, int autodetect_frag_size, int fragsiz
 		}
 	}
 
-	fprintf(stderr, "Using DNS type %s queries\n", get_qtype());
+	LOG("Using DNS type %s queries\n", get_qtype());
 
 	r = handshake_version(dns_fd, &seed);
 	if (r) {
@@ -2452,16 +2452,16 @@ client_handshake(int dns_fd, int raw_mode, int autodetect_frag_size, int fragsiz
 		selecttimeout = 20;
 	} else {
 		if (raw_mode == 0) {
-			fprintf(stderr, "Skipping raw mode\n");
+			LOG("Skipping raw mode\n");
 		}
 
 		dnsc_use_edns0 = 1;
 		if (handshake_edns0_check(dns_fd) && running) {
-			fprintf(stderr, "Using EDNS0 extension\n");
+			LOG("Using EDNS0 extension\n");
 		} else if (!running) {
 			return -1;
 		} else {
-			fprintf(stderr, "DNS relay does not support EDNS0 extension\n");
+			LOG("DNS relay does not support EDNS0 extension\n");
 			dnsc_use_edns0 = 0;
 		}
 

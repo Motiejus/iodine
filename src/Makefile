@@ -9,7 +9,7 @@ ARCH = `uname -m`
 
 LIBPATH = -L.
 LDFLAGS +=  -lz `sh osflags $(TARGETOS) link` $(LIBPATH)
-CFLAGS += -c -g -Wall -D$(OS) -pedantic `sh osflags $(TARGETOS) cflags`
+CFLAGS += -c -g -Wall -D$(OS) -pedantic `sh osflags $(TARGETOS) cflags` -Wno-variadic-macros
 
 all: stateos $(CLIENT) $(SERVER)
 

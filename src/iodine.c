@@ -60,7 +60,7 @@ static void
 usage() {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-v] [-h] [-f] [-r] [-u user] [-t chrootdir] [-d device] "
+	LOG("Usage: %s [-v] [-h] [-f] [-r] [-u user] [-t chrootdir] [-d device] "
 			"[-P password] [-m maxfragsize] [-M maxlen] [-T type] [-O enc] [-L 0|1] [-I sec] "
 			"[-z context] [-F pidfile] [nameserver] topdomain\n", __progname);
 	exit(2);
@@ -70,39 +70,39 @@ static void
 help() {
 	extern char *__progname;
 
-	fprintf(stderr, "iodine IP over DNS tunneling client\n");
-	fprintf(stderr, "Usage: %s [-v] [-h] [-f] [-r] [-u user] [-t chrootdir] [-d device] "
+	LOG("iodine IP over DNS tunneling client\n");
+	LOG("Usage: %s [-v] [-h] [-f] [-r] [-u user] [-t chrootdir] [-d device] "
 			"[-P password] [-m maxfragsize] [-M maxlen] [-T type] [-O enc] [-L 0|1] [-I sec] "
 			"[-z context] [-F pidfile] [nameserver] topdomain\n", __progname);
-	fprintf(stderr, "Options to try if connection doesn't work:\n");
-	fprintf(stderr, "  -T force dns type: NULL, TXT, SRV, MX, CNAME, A (default: autodetect)\n");
-	fprintf(stderr, "  -O force downstream encoding for -T other than NULL: Base32, Base64, Base64u,\n");
-	fprintf(stderr, "     Base128, or (only for TXT:) Raw  (default: autodetect)\n");
-	fprintf(stderr, "  -I max interval between requests (default 4 sec) to prevent DNS timeouts\n");
-	fprintf(stderr, "  -L 1: use lazy mode for low-latency (default). 0: don't (implies -I1)\n");
-	fprintf(stderr, "  -m max size of downstream fragments (default: autodetect)\n");
-	fprintf(stderr, "  -M max size of upstream hostnames (~100-255, default: 255)\n");
-	fprintf(stderr, "  -r to skip raw UDP mode attempt\n");
-	fprintf(stderr, "  -P password used for authentication (max 32 chars will be used)\n");
-	fprintf(stderr, "Other options:\n");
-	fprintf(stderr, "  -v to print version info and exit\n");
-	fprintf(stderr, "  -h to print this help and exit\n");
-	fprintf(stderr, "  -f to keep running in foreground\n");
-	fprintf(stderr, "  -u name to drop privileges and run as user 'name'\n");
-	fprintf(stderr, "  -t dir to chroot to directory dir\n");
-	fprintf(stderr, "  -d device to set tunnel device name\n");
-	fprintf(stderr, "  -z context, to apply specified SELinux context after initialization\n");
-	fprintf(stderr, "  -F pidfile to write pid to a file\n");
-	fprintf(stderr, "nameserver is the IP number/hostname of the relaying nameserver. if absent, /etc/resolv.conf is used\n");
-	fprintf(stderr, "topdomain is the FQDN that is delegated to the tunnel endpoint.\n");
+	LOG("Options to try if connection doesn't work:\n");
+	LOG("  -T force dns type: NULL, TXT, SRV, MX, CNAME, A (default: autodetect)\n");
+	LOG("  -O force downstream encoding for -T other than NULL: Base32, Base64, Base64u,\n");
+	LOG("     Base128, or (only for TXT:) Raw  (default: autodetect)\n");
+	LOG("  -I max interval between requests (default 4 sec) to prevent DNS timeouts\n");
+	LOG("  -L 1: use lazy mode for low-latency (default). 0: don't (implies -I1)\n");
+	LOG("  -m max size of downstream fragments (default: autodetect)\n");
+	LOG("  -M max size of upstream hostnames (~100-255, default: 255)\n");
+	LOG("  -r to skip raw UDP mode attempt\n");
+	LOG("  -P password used for authentication (max 32 chars will be used)\n");
+	LOG("Other options:\n");
+	LOG("  -v to print version info and exit\n");
+	LOG("  -h to print this help and exit\n");
+	LOG("  -f to keep running in foreground\n");
+	LOG("  -u name to drop privileges and run as user 'name'\n");
+	LOG("  -t dir to chroot to directory dir\n");
+	LOG("  -d device to set tunnel device name\n");
+	LOG("  -z context, to apply specified SELinux context after initialization\n");
+	LOG("  -F pidfile to write pid to a file\n");
+	LOG("nameserver is the IP number/hostname of the relaying nameserver. if absent, /etc/resolv.conf is used\n");
+	LOG("topdomain is the FQDN that is delegated to the tunnel endpoint.\n");
 
 	exit(0);
 }
 
 static void
 version() {
-	fprintf(stderr, "iodine IP over DNS tunneling client\n");
-	fprintf(stderr, "version: 0.6.0-rc1 from 2010-02-13\n");
+	LOG("iodine IP over DNS tunneling client\n");
+	LOG("version: 0.6.0-rc1 from 2010-02-13\n");
 
 	exit(0);
 }
@@ -334,7 +334,7 @@ main(int argc, char **argv)
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 
-	fprintf(stderr, "Sending DNS queries for %s to %s\n",
+	LOG("Sending DNS queries for %s to %s\n",
 		topdomain, nameserv_addr);
 
 	if (client_handshake(dns_fd, raw_mode, autodetect_frag_size, max_downstream_frag_size)) {
@@ -343,10 +343,10 @@ main(int argc, char **argv)
 	}
 	
 	if (client_get_conn() == CONN_RAW_UDP) {
-		fprintf(stderr, "Sending raw traffic directly to %s\n", client_get_raw_addr());
+		LOG("Sending raw traffic directly to %s\n", client_get_raw_addr());
 	}
 
-	fprintf(stderr, "Connection setup complete, transmitting data.\n");
+	LOG("Connection setup complete, transmitting data.\n");
 
 	if (foreground == 0) 
 		do_detach();

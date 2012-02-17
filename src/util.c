@@ -75,7 +75,7 @@ socket_setrtable(int fd, int rtable)
 	if (setsockopt (fd, IPPROTO_IP, SO_RTABLE, &rtable, sizeof(rtable)) == -1)
 		err(1, "Failed to set routing table %d", rtable);
 #else
-	fprintf(stderr, "Routing domain support was not available at compile time.\n");
+	LOG("Routing domain support was not available at compile time.\n");
 #endif
 }
 #endif
