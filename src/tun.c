@@ -68,34 +68,6 @@ char if_name[250];
 #include <net/if.h>
 #include <linux/if_tun.h>
 
-#ifdef TUNEMU
-
-int 
-open_tun(const char *tun_device) 
-{
-	int fd;
-	tunemu_device tun_name;
-
-	if (tun_device != NULL)
-		snprintf(tun_name, sizeof(tunemu_device), "%s", tun_device);
-	else
-		tun_name[0] = 0;
-
-	fd = tunemu_open(tun_name);
-	if (fd < 0)
-	{
-		warn("open_tun: %s", tunemu_error);
-		return -1;
-	}
-
-	snprintf(if_name, sizeof(if_name), "%s", tun_name);
-	fprintf(stderr, "Opened %s\n", tun_name);
-
-	return fd;
-}
-
-#else /* TUNEMU */
-
 int 
 open_tun(const char *tun_device) 
 {
@@ -149,10 +121,33 @@ open_tun(const char *tun_device)
 	warn("error when opening tun");
 	return -1;
 }
-#endif /* TUNEMU */
+#else /* !LINUX */
 
+#ifdef TUNEMU
+int 
+open_tun(const char *tun_device) 
+{
+	int fd;
+	tunemu_device tun_name;
+
+	if (tun_device != NULL)
+		snprintf(tun_name, sizeof(tunemu_device), "%s", tun_device);
+	else
+		tun_name[0] = 0;
+
+	fd = tunemu_open(tun_name);
+	if (fd < 0)
+	{
+		warn("open_tun: %s", tunemu_error);
+		return -1;
+	}
+
+	snprintf(if_name, sizeof(if_name), "%s", tun_name);
+	fprintf(stderr, "Opened %s\n", tun_name);
+
+	return fd;
+}
 #else /* BSD */
-
 int 
 open_tun(const char *tun_device) 
 {
@@ -191,7 +186,7 @@ open_tun(const char *tun_device)
 
 	return -1;
 }
-
+#endif /* TUNEMU | BSD */
 #endif /* !LINUX */
 #else /* WINDOWS32 */
 static void
