@@ -276,15 +276,13 @@ check_topdomain(char *str)
        return 0;
 }
 
-#if defined(WINDOWS32) || defined(ANDROID)
-#ifndef ANDROID
+#if defined(WINDOWS32)
 int
 inet_aton(const char *cp, struct in_addr *inp)
 {
  inp->s_addr = inet_addr(cp);
  return inp->s_addr != INADDR_ANY;
 }
-#endif
 
 void
 warn(const char *fmt, ...)
@@ -293,13 +291,11 @@ warn(const char *fmt, ...)
 
 	va_start(list, fmt);
 	if (fmt) fprintf(stderr, fmt, list);
-#ifndef ANDROID
 	if (errno == 0) {
 		fprintf(stderr, ": WSA error %d\n", WSAGetLastError()); 
 	} else {
 		fprintf(stderr, ": %s\n", strerror(errno));
 	}
-#endif
 	va_end(list);
 }
 
@@ -335,7 +331,7 @@ errx(int eval, const char *fmt, ...)
 	va_end(list);
 	exit(eval);
 }
-#endif
+#endif /* WINDOWS */
 
 
 int recent_seqno(int ourseqno, int gotseqno)

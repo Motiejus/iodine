@@ -160,9 +160,9 @@ client_set_nameserver(const char *cp, int port)
 	sprintf(sport, "%d", port);
 
 	getaddrinfo(cp, sport, &hints, &result);
-	if (result == NULL)
+	if (result == NULL) {
 		errx(1, "Cannot resolve %s:%s (no network?)",  cp, sport);
-	else {
+	} else {
 		for (p = result;p != NULL; p = p->ai_next) {
 			if (p->ai_family == AF_INET) { /* IPv4 */
 				struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;

@@ -122,13 +122,21 @@ int check_topdomain(char *);
 #if defined(WINDOWS32) || defined(ANDROID)
 #ifndef ANDROID
 int inet_aton(const char *cp, struct in_addr *inp);
-#endif
 
 void err(int eval, const char *fmt, ...);
 void warn(const char *fmt, ...);
 void errx(int eval, const char *fmt, ...);
 void warnx(const char *fmt, ...);
-#endif
+#else
+#include <unistd.h>
+#include <stdlib.h>
+#define warn(...) fprintf(stderr, __VA_ARGS__)
+#define warnx(format, ...) fprintf(stderr, format "\n", ##__VA_ARGS__)
+#define err(eval, ...) { warn(__VA_ARGS__); exit(eval); }
+#define errx(eval, ...) { warnx(__VA_ARGS__); exit(eval); }
+#endif /* ANDROID */
+
+#endif /* WINDOWS || ANDROID */
 
 int recent_seqno(int , int);
 
